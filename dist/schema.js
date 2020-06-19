@@ -41,8 +41,9 @@ exports.default = `
     type Mutation {
         signup(email: String!, password: String!, name: String!): AuthPayload
         login(email: String!, password: String!): AuthPayload
-        createProduct(name: String!, brand: String!, price: Float!, image: Upload): Product!
+        createProduct(name: String!, brand: String!, price: Float!, image: Upload!): Product!
         updateProduct(id:ID!, name:String, brand: String, price:Float, image: Upload): Product!
+        deleteProduct(id:ID!): String!
         createCart: Product!
         addProductToCart(id: ID!, productId:ID!, quantity: Float!): Product!
         removeProductFromCart(id: ID!, productId:ID!, quantity: Float!): Product!

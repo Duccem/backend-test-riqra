@@ -9,6 +9,7 @@ Product.init(
 		brand: { type: Sequelize.TEXT },
 		price: { type: Sequelize.FLOAT },
 		userId: { type: Sequelize.INTEGER },
+		cloudId: { type: Sequelize.TEXT },
 	},
 	{
 		sequelize,

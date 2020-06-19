@@ -30,6 +30,7 @@ Product.init({
     brand: { type: sequelize_1.default.TEXT },
     price: { type: sequelize_1.default.FLOAT },
     userId: { type: sequelize_1.default.INTEGER },
+    cloudId: { type: sequelize_1.default.TEXT },
 }, {
     sequelize: database_1.sequelize,
     modelName: 'product',
