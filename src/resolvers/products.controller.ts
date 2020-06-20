@@ -1,27 +1,23 @@
-import cloudinary from 'cloudinary';
-import dotenv from 'dotenv';
-import { Logger } from 'ducenlogger';
-import Product from '../models/Product';
 import { getUserId } from '../lib/auth';
-const logger = new Logger();
-dotenv.config();
+import cloudinary from '../lib/cloudinary';
+import index from '../lib/algolia';
+import logger from '../lib/logger';
+import { Models } from '../models';
+const { Product } = Models;
 
-cloudinary.v2.config({
-	cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-	api_key: process.env.CLOUDINARY_API_KEY,
-	api_secret: process.env.CLOUDINARY_API_SECRET,
-});
 export const productQuery = {
-	getProducts: async (_parent: any, _args: any, context: any) => {
+	search: async (_parent: any, args: any, context: any) => {
 		try {
 			const _userId = getUserId(context);
-			return await Product.findAll({ where: { userId: _userId } });
+			const { hits } = await index.search(args.term, { page: args.page, length: args.limit });
+			const products = hits;
+			return products;
 		} catch (error) {
 			return { message: 'Not Authorized' };
 		}
 	},
-	getProduct: async (_parent: any, { id }: any) => await Product.findByPk(id),
 };
+
 export const productMutations = {
 	createProduct: async (_parent: any, args: any, context: any) => {
 		try {
@@ -35,7 +31,7 @@ export const productMutations = {
 				});
 				createReadStream().pipe(cloudStream);
 			});
-			const newProduct = {
+			const newProduct: any = {
 				name: args.name,
 				brand: args.brand,
 				price: args.price,
@@ -44,6 +40,8 @@ export const productMutations = {
 				cloudId: result.public_id,
 			};
 			const productCreated = await Product.create(newProduct);
+			newProduct.objectID = productCreated.id;
+			await index.saveObject(newProduct);
 			return productCreated;
 		} catch (error) {
 			logger.log('On create a product', { color: 'error', type: 'error' });
@@ -73,6 +71,8 @@ export const productMutations = {
 			newProduct.brand = args.brand;
 			newProduct.price = args.price;
 			await Product.update(newProduct, { where: { id: args.id } });
+			newProduct.objectID = args.id;
+			await index.partialUpdateObject(newProduct);
 			return await Product.findByPk(args.id);
 		} catch (error) {
 			logger.log('On update a product', { color: 'error', type: 'error' });
@@ -85,6 +85,7 @@ export const productMutations = {
 			const product = await Product.findByPk(id, { attributes: ['cloudId'] });
 			if (!product) return 'Product not found';
 			await cloudinary.v2.uploader.destroy(product.cloudId);
+			await index.deleteObject(id);
 			await Product.destroy({ where: { id: id } });
 			return 'Product deleted';
 		} catch (error) {

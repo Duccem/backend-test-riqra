@@ -1,14 +1,9 @@
-import Order from '../models/Order';
-import Cart from '../models/Cart';
-import CartDetail from '../models/CartDetail';
-import Product from '../models/Product';
-import User from '../models/User';
+import { Models } from '../models';
+const { Order, Cart, CartDetail, Product, User } = Models;
 import { getUserId } from '../lib/auth';
 import nodemailer from 'nodemailer';
-import dotenv from 'dotenv';
-import { Logger } from 'ducenlogger';
-const logger = new Logger();
-dotenv.config();
+import logger from '../lib/logger';
+import { mail } from '../lib/keys';
 
 export const OrderQuery = {
 	getOrder: async (parent: any, args: any, context: any) => {
@@ -59,13 +54,13 @@ export const OrderMutations = {
 				port: 465,
 				secure: false,
 				auth: {
-					user: process.env.MAIL,
-					pass: process.env.MAIL_PASSWORD,
+					user: mail.mail,
+					pass: mail.password,
 				},
 			});
 			let { messageId } = await transporter.sendMail({
 				to: user.email,
-				from: process.env.MAIL,
+				from: mail.mail,
 				subject: 'Password recuperation',
 				html: `
                     Yor order has been created with code ${newOrder.code}

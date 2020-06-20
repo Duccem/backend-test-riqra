@@ -1,10 +1,7 @@
-import Cart from '../models/Cart';
-import CartDetail from '../models/CartDetail';
-import Product from '../models/Product';
+import { Models } from '../models';
+const { Cart, CartDetail, Product } = Models;
 import { getUserId } from '../lib/auth';
-import { Logger } from 'ducenlogger';
-
-const logger = new Logger();
+import logger from '../lib/logger';
 
 export const CartQuery = {
 	getCarts: async (parent: any, args: any, context: any) => {
