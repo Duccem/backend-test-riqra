@@ -20,7 +20,15 @@ export default `
         total: Float
         tax: Float
         subtotal: Float
+        products: [CartDetail]
+    }
 
+    type CartDetail {
+        name: String
+        image: String
+        brand: String
+        price: Float
+        quantity: Float
     }
 
     type Order {
@@ -43,8 +51,8 @@ export default `
         updateProduct(id:ID!, name:String, brand: String, price:Float, image: Upload): Product!
         deleteProduct(id:ID!): String!
         createCart: Product!
-        addProductToCart(id: ID!, productId:ID!, quantity: Float!): Product!
-        removeProductFromCart(id: ID!, productId:ID!, quantity: Float!): Product!
+        addProductToCart(id: ID!, productId:ID!, quantity: Float!): String!
+        removeProductFromCart(id: ID!, productId:ID!, quantity: Float!): String!
         convertCartToOrder(id:ID!): Order
     }
 
