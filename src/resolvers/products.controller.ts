@@ -2,6 +2,7 @@ import cloudinary from 'cloudinary';
 import dotenv from 'dotenv';
 import { Logger } from 'ducenlogger';
 import Product from '../models/Product';
+import { getUserId } from '../lib/auth';
 const logger = new Logger();
 dotenv.config();
 
@@ -11,14 +12,22 @@ cloudinary.v2.config({
 	api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 export const productQuery = {
-	getProducts: async () => await Product.findAll(),
+	getProducts: async (_parent: any, _args: any, context: any) => {
+		try {
+			const _userId = getUserId(context);
+			return await Product.findAll({ where: { userId: _userId } });
+		} catch (error) {
+			return { message: 'Not Authorized' };
+		}
+	},
 	getProduct: async (_parent: any, { id }: any) => await Product.findByPk(id),
 };
 export const productMutations = {
-	createProduct: async (parent: any, args: any) => {
-		const file = await args.image;
-		const { createReadStream } = file;
+	createProduct: async (_parent: any, args: any, context: any) => {
 		try {
+			const userId = getUserId(context);
+			const file = await args.image;
+			const { createReadStream } = file;
 			const result: any = await new Promise((resolve, reject) => {
 				const cloudStream = cloudinary.v2.uploader.upload_stream({ folder: 'riqra' }, (error, file) => {
 					if (error) reject(error);
@@ -30,23 +39,25 @@ export const productMutations = {
 				name: args.name,
 				brand: args.brand,
 				price: args.price,
+				userId: userId,
 				image: result.secure_url,
 				cloudId: result.public_id,
 			};
 			const productCreated = await Product.create(newProduct);
 			return productCreated;
 		} catch (error) {
-			logger.log('On upload to cloudinary', { color: 'error', type: 'error' });
+			logger.log('On create a product', { color: 'error', type: 'error' });
 		}
 	},
-	updateProduct: async (parent: any, args: any) => {
-		const product = await Product.findByPk(args.id, { attributes: ['cloudId'] });
-		if (!product) return 'Product doesn`t exits';
-		const file = await args.image;
-		const newProduct: any = {};
-		if (file) {
-			const { createReadStream } = file;
-			try {
+	updateProduct: async (_parent: any, args: any, context: any) => {
+		try {
+			const userId = getUserId(context);
+			const product = await Product.findByPk(args.id, { attributes: ['cloudId'] });
+			if (!product) return 'Product doesn`t exits';
+			const file = await args.image;
+			const newProduct: any = {};
+			if (file) {
+				const { createReadStream } = file;
 				await cloudinary.v2.uploader.destroy(product.cloudId);
 				const result: any = await new Promise((resolve, reject) => {
 					const cloudStream = cloudinary.v2.uploader.upload_stream({ folder: 'riqra' }, (error, file) => {
@@ -57,19 +68,20 @@ export const productMutations = {
 				});
 				newProduct.image = result.secure_url;
 				newProduct.cloudId = result.public_id;
-			} catch (error) {
-				logger.log('On upload to cloudinary', { color: 'error', type: 'error' });
 			}
+			newProduct.name = args.name;
+			newProduct.brand = args.brand;
+			newProduct.price = args.price;
+			await Product.update(newProduct, { where: { id: args.id } });
+			return await Product.findByPk(args.id);
+		} catch (error) {
+			logger.log('On update a product', { color: 'error', type: 'error' });
+			return { message: 'Not Authenticated' };
 		}
-
-		newProduct.name = args.name;
-		newProduct.brand = args.brand;
-		newProduct.price = args.price;
-		await Product.update(newProduct, { where: { id: args.id } });
-		return await Product.findByPk(args.id);
 	},
-	deleteProduct: async (parent: any, { id }: any) => {
+	deleteProduct: async (_parent: any, { id }: any, context: any) => {
 		try {
+			const userId = getUserId(context);
 			const product = await Product.findByPk(id, { attributes: ['cloudId'] });
 			if (!product) return 'Product not found';
 			await cloudinary.v2.uploader.destroy(product.cloudId);

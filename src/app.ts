@@ -1,4 +1,4 @@
-import express, { Application, json, urlencoded } from 'express';
+import express, { Application, json, urlencoded, request } from 'express';
 import { ApolloServer, gql } from 'apollo-server-express';
 import { Logger } from 'ducenlogger';
 import schema from './schema';
@@ -22,6 +22,9 @@ export class App {
 		const server = new ApolloServer({
 			typeDefs: gql(schema),
 			resolvers,
+			context: (request) => {
+				return request;
+			},
 		});
 		server.applyMiddleware({ app: this.app, path: '/api' });
 	}
