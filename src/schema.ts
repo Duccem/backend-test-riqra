@@ -58,7 +58,6 @@ export default `
 
     type Query {
         search(term: String!, page: Int!, limit:Int!): [Product!]!
-        getCarts: [Cart!]!
         getCart(id: ID!): Cart
         getOrders: [Order!]!
         getOrder(id: ID!): Order

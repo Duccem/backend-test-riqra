@@ -4,34 +4,6 @@ import { getUserId } from '../lib/auth';
 import logger from '../lib/logger';
 
 export const CartQuery = {
-	getCarts: async (parent: any, args: any, context: any) => {
-		try {
-			const _userId = getUserId(context);
-			const carts = await Cart.findAll({ where: { userId: _userId } });
-			for (let index = 0; index < carts.length; index++) {
-				const element = carts[index];
-				let products = [];
-				let details = await CartDetail.findAll({ where: { cartId: element.id } });
-				for (let index1 = 0; index1 < details.length; index1++) {
-					const element = details[index1];
-					let product = await Product.findOne({ where: { id: element.productId } });
-					let newDetail = {
-						name: product.name,
-						brand: product.brand,
-						price: product.price,
-						image: product.image,
-						quantity: element.quantity,
-					};
-					products.push(newDetail);
-				}
-				carts[index].products = products;
-			}
-			return carts;
-		} catch (error) {
-			logger.log('On get carts', { type: 'error', color: 'error' });
-			return { message: 'Iternal error' };
-		}
-	},
 	getCart: async (parent: any, args: any, context: any) => {
 		try {
 			const _userId = getUserId(context);
