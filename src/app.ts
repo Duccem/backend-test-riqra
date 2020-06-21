@@ -22,8 +22,8 @@ export class App {
 		const server = new ApolloServer({
 			typeDefs: gql(schema),
 			resolvers,
-			context: (request) => {
-				return request;
+			context: ({ req }) => {
+				return { req };
 			},
 		});
 		server.applyMiddleware({ app: this.app, path: '/api' });

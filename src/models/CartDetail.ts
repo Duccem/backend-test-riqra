@@ -17,7 +17,4 @@ CartDetail.init(
 	}
 );
 
-Product.hasMany(CartDetail, { foreignKey: 'productId', sourceKey: 'id' });
-CartDetail.belongsTo(Product, { foreignKey: 'productId', targetKey: 'id' });
-
 export default CartDetail;

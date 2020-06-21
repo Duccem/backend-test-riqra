@@ -18,22 +18,26 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const database_1 = require("../database");
 const sequelize_1 = __importStar(require("sequelize"));
-class Product extends sequelize_1.Model {
+const CartDetail_1 = __importDefault(require("./CartDetail"));
+class Cart extends sequelize_1.Model {
 }
-Product.init({
+Cart.init({
     id: { type: sequelize_1.default.INTEGER, primaryKey: true },
-    name: { type: sequelize_1.default.TEXT, validate: { max: 35 } },
-    image: { type: sequelize_1.default.TEXT },
-    brand: { type: sequelize_1.default.TEXT },
-    price: { type: sequelize_1.default.FLOAT },
+    total: { type: sequelize_1.default.FLOAT },
+    tax: { type: sequelize_1.default.FLOAT },
+    subtotal: { type: sequelize_1.default.FLOAT },
     userId: { type: sequelize_1.default.INTEGER },
-    cloudId: { type: sequelize_1.default.TEXT },
 }, {
     sequelize: database_1.sequelize,
-    modelName: 'product',
+    modelName: 'cart',
     timestamps: false,
 });
-exports.default = Product;
+Cart.hasMany(CartDetail_1.default, { foreignKey: 'cartId', sourceKey: 'id' });
+CartDetail_1.default.belongsTo(Cart, { foreignKey: 'cartId', targetKey: 'id' });
+exports.default = Cart;

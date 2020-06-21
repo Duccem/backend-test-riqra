@@ -40,10 +40,11 @@ export const productMutations = {
 				cloudId: result.public_id,
 			};
 			const productCreated = await Product.create(newProduct);
-			newProduct.objectID = productCreated.id;
+			newProduct.objectID = productCreated.null;
 			await index.saveObject(newProduct);
 			return productCreated;
 		} catch (error) {
+			console.log(error);
 			logger.log('On create a product', { color: 'error', type: 'error' });
 		}
 	},

@@ -37,11 +37,11 @@ export const OrderMutations = {
 	convertCartToOrder: async (parent: any, args: any, context: any) => {
 		try {
 			const _userId = getUserId(context);
-			const cart = await Cart.findOne({ where: { id: args.cartId, userId: _userId } });
-			if (!cart) return { message: 'Cart doesn`t exists' };
+			const cart = await Cart.findOne({ where: { id: args.id, userId: _userId } });
+			if (!cart) return {};
 
 			let code = new String(cart.id);
-			const newOrder = {
+			const newOrder: any = {
 				total: cart.total,
 				subtotal: cart.subtotal,
 				tax: cart.tax,
@@ -60,15 +60,17 @@ export const OrderMutations = {
 			});
 			let { messageId } = await transporter.sendMail({
 				to: user.email,
-				from: mail.mail,
-				subject: 'Password recuperation',
+				from: 'ducen29@gmail.com',
+				subject: 'Order created',
 				html: `
                     Yor order has been created with code ${newOrder.code}
                 `,
 			});
 			const createdOrder = await Order.create(newOrder);
-			return createdOrder;
+			newOrder.id = createdOrder.null;
+			return newOrder;
 		} catch (error) {
+			console.log(error);
 			logger.log('On get carts', { type: 'error', color: 'error' });
 			return { message: 'Iternal error' };
 		}

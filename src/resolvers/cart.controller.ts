@@ -35,15 +35,17 @@ export const CartMutations = {
 	createCart: async (parent: any, args: any, context: any) => {
 		try {
 			const _userId = getUserId(context);
-			const newCart = {
+			const newCart: any = {
 				userId: _userId,
 				total: 0,
 				subtotal: 0,
 				tax: 0,
 			};
 			const cartCreated = await Cart.create(newCart);
-			return cartCreated;
+			newCart.id = cartCreated.null;
+			return newCart;
 		} catch (error) {
+			console.log(error);
 			logger.log('On create cart', { type: 'error', color: 'error' });
 			return { message: 'Iternal error' };
 		}
@@ -53,33 +55,33 @@ export const CartMutations = {
 			const _userId = getUserId(context);
 			const cart = await Cart.findOne({ where: { id: args.id, userId: _userId } });
 			const product = await Product.findOne({ where: { id: args.productId, userId: _userId } });
-
-			if (!product) return { message: 'The product doesn`t exist' };
+			if (!product) return 'The product doesn`t exist';
 
 			let price = 0;
 			let totalprice = 0;
 			let tax = 0;
 			const detail = await CartDetail.findOne({ where: { cartId: cart.id, productId: product.id } });
 			if (detail) {
-				price = (detail.quantity + args.quantity) * product.price;
-				totalprice = cart.subtotal - detail.quantity * product.price + price;
-				await CartDetail.update({ quantity: detail.quantity + args.quantity }, { where: { id: detail.id } });
+				price = (parseFloat(detail.quantity) + parseFloat(args.quantity)) * parseFloat(product.price);
+				totalprice = parseFloat(cart.subtotal) - parseFloat(detail.quantity) * parseFloat(product.price) + price;
+				await CartDetail.update({ quantity: parseFloat(detail.quantity) + parseFloat(args.quantity) }, { where: { id: detail.id } });
 			} else {
 				let newDetail = {
 					userId: _userId,
+					cartId: cart.id,
 					productId: product.id,
-					quantity: args.quantity <= 0 ? 0 : args.quantity,
+					quantity: parseFloat(args.quantity),
 				};
-				price = newDetail.quantity * product.price;
-				totalprice = cart.subtotal + price;
+				price = newDetail.quantity * parseFloat(product.price);
+				totalprice = parseFloat(cart.subtotal) + price;
 				await CartDetail.create(newDetail);
 			}
 			tax = totalprice * 0.18;
 			Cart.update({ subtotal: totalprice, tax: tax, total: totalprice + tax }, { where: { id: cart.id } });
-			return { message: 'Product added' };
+			return 'Product added';
 		} catch (error) {
 			logger.log('On add product to a cart', { type: 'error', color: 'error' });
-			return { message: 'Iternal error' };
+			return 'Iternal error';
 		}
 	},
 	removeProductFromCart: async (parent: any, args: any, context: any) => {
@@ -88,10 +90,10 @@ export const CartMutations = {
 			const cart = await Cart.findOne({ where: { id: args.id, userId: _userId } });
 			const product = await Product.findOne({ where: { id: args.productId, userId: _userId } });
 
-			if (!product) return { message: 'The product doesn`t exist' };
+			if (!product) return 'The product doesn`t exist';
 
 			const detail = await CartDetail.findOne({ where: { cartId: cart.id, productId: product.id } });
-			if (!detail) return { message: 'The cart doesn`t have this product' };
+			if (!detail) return 'The cart doesn`t have this product';
 
 			let price = 0;
 			let totalprice = 0;
@@ -106,10 +108,10 @@ export const CartMutations = {
 			totalprice = cart.subtotal - price;
 			tax = totalprice * 0.18;
 			Cart.update({ subtotal: totalprice, tax: tax, total: totalprice + tax }, { where: { id: cart.id } });
-			return { message: 'Product removed' };
+			return 'Product removed';
 		} catch (error) {
 			logger.log('On remove product from a cart', { type: 'error', color: 'error' });
-			return { message: 'Iternal error' };
+			return 'Iternal error';
 		}
 	},
 };

@@ -14,7 +14,7 @@ Order.init(
 	{
 		sequelize,
 		modelName: 'order',
-		timestamps: true,
+		timestamps: false,
 	}
 );
 

@@ -21,19 +21,18 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const database_1 = require("../database");
 const sequelize_1 = __importStar(require("sequelize"));
-class Product extends sequelize_1.Model {
+class Order extends sequelize_1.Model {
 }
-Product.init({
+Order.init({
     id: { type: sequelize_1.default.INTEGER, primaryKey: true },
-    name: { type: sequelize_1.default.TEXT, validate: { max: 35 } },
-    image: { type: sequelize_1.default.TEXT },
-    brand: { type: sequelize_1.default.TEXT },
-    price: { type: sequelize_1.default.FLOAT },
-    userId: { type: sequelize_1.default.INTEGER },
-    cloudId: { type: sequelize_1.default.TEXT },
+    code: { type: sequelize_1.default.TEXT },
+    subtotal: { type: sequelize_1.default.FLOAT },
+    tax: { type: sequelize_1.default.FLOAT },
+    total: { type: sequelize_1.default.FLOAT },
+    cartId: { type: sequelize_1.default.INTEGER },
 }, {
     sequelize: database_1.sequelize,
-    modelName: 'product',
+    modelName: 'order',
     timestamps: false,
 });
-exports.default = Product;
+exports.default = Order;

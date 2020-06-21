@@ -45,6 +45,9 @@ class App {
         const server = new apollo_server_express_1.ApolloServer({
             typeDefs: apollo_server_express_1.gql(schema_1.default),
             resolvers: resolvers_1.default,
+            context: ({ req }) => {
+                return { req };
+            },
         });
         server.applyMiddleware({ app: this.app, path: '/api' });
     }

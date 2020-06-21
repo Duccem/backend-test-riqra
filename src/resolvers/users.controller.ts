@@ -14,9 +14,9 @@ export const UserMutations = {
 			if (count > 0) return { message: 'The email is already in use' };
 
 			newUser.password = await encriptar(newUser.password);
-			await User.create(newUser);
+			const createdUser = await User.create(newUser);
 
-			const token = jwt.sign({ _id: newUser.email }, process.env.TOKEN_KEY || '2423503', { expiresIn: 60 * 60 * 24 });
+			const token = jwt.sign({ _id: createdUser.null }, process.env.TOKEN_KEY || '2423503', { expiresIn: 60 * 60 * 24 });
 			return {
 				user: args,
 				token,
@@ -34,7 +34,7 @@ export const UserMutations = {
 			let valid = await validar(args.password, user.password);
 			if (!valid) return { message: 'Incorrect password' };
 
-			const token = jwt.sign({ _id: user.email }, process.env.TOKEN_KEY || '2423503', { expiresIn: 60 * 60 * 24 });
+			const token = jwt.sign({ _id: user.id }, process.env.TOKEN_KEY || '2423503', { expiresIn: 60 * 60 * 24 });
 			return {
 				user: args,
 				token,

@@ -13,26 +13,31 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.productMutations = exports.productQuery = void 0;
-const cloudinary_1 = __importDefault(require("cloudinary"));
-const dotenv_1 = __importDefault(require("dotenv"));
-const ducenlogger_1 = require("ducenlogger");
-const Product_1 = __importDefault(require("../models/Product"));
-const logger = new ducenlogger_1.Logger();
-dotenv_1.default.config();
-cloudinary_1.default.v2.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+const auth_1 = require("../lib/auth");
+const cloudinary_1 = __importDefault(require("../lib/cloudinary"));
+const algolia_1 = __importDefault(require("../lib/algolia"));
+const logger_1 = __importDefault(require("../lib/logger"));
+const models_1 = require("../models");
+const { Product } = models_1.Models;
 exports.productQuery = {
-    getProducts: () => __awaiter(void 0, void 0, void 0, function* () { return yield Product_1.default.findAll(); }),
-    getProduct: (_parent, { id }) => __awaiter(void 0, void 0, void 0, function* () { return yield Product_1.default.findByPk(id); }),
+    search: (_parent, args, context) => __awaiter(void 0, void 0, void 0, function* () {
+        try {
+            const _userId = auth_1.getUserId(context);
+            const { hits } = yield algolia_1.default.search(args.term, { page: args.page, length: args.limit });
+            const products = hits;
+            return products;
+        }
+        catch (error) {
+            return { message: 'Not Authorized' };
+        }
+    }),
 };
 exports.productMutations = {
-    createProduct: (parent, args) => __awaiter(void 0, void 0, void 0, function* () {
-        const file = yield args.image;
-        const { createReadStream } = file;
+    createProduct: (_parent, args, context) => __awaiter(void 0, void 0, void 0, function* () {
         try {
+            const userId = auth_1.getUserId(context);
+            const file = yield args.image;
+            const { createReadStream } = file;
             const result = yield new Promise((resolve, reject) => {
                 const cloudStream = cloudinary_1.default.v2.uploader.upload_stream({ folder: 'riqra' }, (error, file) => {
                     if (error)
@@ -45,25 +50,30 @@ exports.productMutations = {
                 name: args.name,
                 brand: args.brand,
                 price: args.price,
+                userId: userId,
                 image: result.secure_url,
                 cloudId: result.public_id,
             };
-            const productCreated = yield Product_1.default.create(newProduct);
+            const productCreated = yield Product.create(newProduct);
+            newProduct.objectID = productCreated.null;
+            yield algolia_1.default.saveObject(newProduct);
             return productCreated;
         }
         catch (error) {
-            logger.log('On upload to cloudinary', { color: 'error', type: 'error' });
+            console.log(error);
+            logger_1.default.log('On create a product', { color: 'error', type: 'error' });
         }
     }),
-    updateProduct: (parent, args) => __awaiter(void 0, void 0, void 0, function* () {
-        const product = yield Product_1.default.findByPk(args.id, { attributes: ['cloudId'] });
-        if (!product)
-            return 'Product doesn`t exits';
-        const file = yield args.image;
-        const newProduct = {};
-        if (file) {
-            const { createReadStream } = file;
-            try {
+    updateProduct: (_parent, args, context) => __awaiter(void 0, void 0, void 0, function* () {
+        try {
+            const userId = auth_1.getUserId(context);
+            const product = yield Product.findByPk(args.id, { attributes: ['cloudId'] });
+            if (!product)
+                return 'Product doesn`t exits';
+            const file = yield args.image;
+            const newProduct = {};
+            if (file) {
+                const { createReadStream } = file;
                 yield cloudinary_1.default.v2.uploader.destroy(product.cloudId);
                 const result = yield new Promise((resolve, reject) => {
                     const cloudStream = cloudinary_1.default.v2.uploader.upload_stream({ folder: 'riqra' }, (error, file) => {
@@ -76,27 +86,32 @@ exports.productMutations = {
                 newProduct.image = result.secure_url;
                 newProduct.cloudId = result.public_id;
             }
-            catch (error) {
-                logger.log('On upload to cloudinary', { color: 'error', type: 'error' });
-            }
+            newProduct.name = args.name;
+            newProduct.brand = args.brand;
+            newProduct.price = args.price;
+            yield Product.update(newProduct, { where: { id: args.id } });
+            newProduct.objectID = args.id;
+            yield algolia_1.default.partialUpdateObject(newProduct);
+            return yield Product.findByPk(args.id);
         }
-        newProduct.name = args.name;
-        newProduct.brand = args.brand;
-        newProduct.price = args.price;
-        yield Product_1.default.update(newProduct, { where: { id: args.id } });
-        return yield Product_1.default.findByPk(args.id);
+        catch (error) {
+            logger_1.default.log('On update a product', { color: 'error', type: 'error' });
+            return { message: 'Not Authenticated' };
+        }
     }),
-    deleteProduct: (parent, { id }) => __awaiter(void 0, void 0, void 0, function* () {
+    deleteProduct: (_parent, { id }, context) => __awaiter(void 0, void 0, void 0, function* () {
         try {
-            const product = yield Product_1.default.findByPk(id, { attributes: ['cloudId'] });
+            const userId = auth_1.getUserId(context);
+            const product = yield Product.findByPk(id, { attributes: ['cloudId'] });
             if (!product)
                 return 'Product not found';
             yield cloudinary_1.default.v2.uploader.destroy(product.cloudId);
-            yield Product_1.default.destroy({ where: { id: id } });
+            yield algolia_1.default.deleteObject(id);
+            yield Product.destroy({ where: { id: id } });
             return 'Product deleted';
         }
         catch (error) {
-            logger.log('Deleting record', { color: 'error', type: 'error' });
+            logger_1.default.log('Deleting record', { color: 'error', type: 'error' });
         }
     }),
 };
