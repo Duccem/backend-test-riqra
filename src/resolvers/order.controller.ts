@@ -43,6 +43,7 @@ export const OrderMutations = {
 			const _userId = getUserId(context);
 			const cart = await Cart.findOne({ where: { id: args.id, userId: _userId } });
 			if (!cart) return {};
+			if (cart.converted == true) throw new Error('The order have been created');
 
 			const count = await Order.count({ where: { userId: _userId } });
 			let code = new String(count);
@@ -78,6 +79,7 @@ export const OrderMutations = {
 			return newOrder;
 		} catch (error) {
 			logger.log('On get carts', { type: 'error', color: 'error' });
+			if ((error = 'The order have been created')) throw new Error('The order have been created');
 			if (error == 'Not authenticated') throw new Error('Not authenticated');
 			throw new Error('Internal error');
 		}

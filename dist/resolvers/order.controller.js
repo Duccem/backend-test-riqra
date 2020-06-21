@@ -46,7 +46,9 @@ exports.OrderQuery = {
         }
         catch (error) {
             logger_1.default.log('On get carts', { type: 'error', color: 'error' });
-            return { message: 'Iternal error' };
+            if (error == 'Not authenticated')
+                throw new Error('Not authenticated');
+            throw new Error('Internal error');
         }
     }),
 };
@@ -57,6 +59,8 @@ exports.OrderMutations = {
             const cart = yield Cart.findOne({ where: { id: args.id, userId: _userId } });
             if (!cart)
                 return {};
+            if (cart.converted == true)
+                throw new Error('The order have been created');
             const count = yield Order.count({ where: { userId: _userId } });
             let code = new String(count);
             const newOrder = {
@@ -91,9 +95,12 @@ exports.OrderMutations = {
             return newOrder;
         }
         catch (error) {
-            console.log(error);
             logger_1.default.log('On get carts', { type: 'error', color: 'error' });
-            return { message: 'Iternal error' };
+            if ((error = 'The order have been created'))
+                throw new Error('The order have been created');
+            if (error == 'Not authenticated')
+                throw new Error('Not authenticated');
+            throw new Error('Internal error');
         }
     }),
 };

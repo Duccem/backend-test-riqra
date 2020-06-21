@@ -22,13 +22,13 @@ const logger = new ducenlogger_1.Logger();
 dotenv_1.default.config();
 exports.UserMutations = {
     signup: (parent, args) => __awaiter(void 0, void 0, void 0, function* () {
+        const newUser = args;
+        const count = yield User_1.default.count({ where: { email: args.email } });
+        if (count > 0)
+            throw new Error('User already exists');
+        if (newUser.password.length <= 6)
+            throw new Error('The password must be longer than 6 characters.');
         try {
-            const newUser = args;
-            const count = yield User_1.default.count({ where: { email: args.email } });
-            if (count > 0)
-                throw new Error('User already exists');
-            if (newUser.password.length <= 6)
-                throw new Error('The password must be longer than 6 characters.');
             newUser.password = yield encript_1.encriptar(newUser.password);
             const createdUser = yield User_1.default.create(newUser);
             const token = jsonwebtoken_1.default.sign({ _id: createdUser.null }, process.env.TOKEN_KEY || '2423503', { expiresIn: 60 * 60 * 24 });
@@ -46,10 +46,10 @@ exports.UserMutations = {
         const user = yield User_1.default.findOne({ where: { email: args.email } });
         if (!user)
             throw new Error('User not found');
+        let valid = yield encript_1.validar(args.password, user.password);
+        if (!valid)
+            throw new Error('Oops! incorrect password');
         try {
-            let valid = yield encript_1.validar(args.password, user.password);
-            if (!valid)
-                throw new Error('Oops! incorrect password');
             const token = jsonwebtoken_1.default.sign({ _id: user.id }, process.env.TOKEN_KEY || '2423503', { expiresIn: 60 * 60 * 24 });
             return {
                 user: args,

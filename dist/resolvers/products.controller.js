@@ -28,12 +28,17 @@ exports.productQuery = {
             return products;
         }
         catch (error) {
-            return { message: 'Not Authorized' };
+            logger_1.default.log('On search', { color: 'error', type: 'error' });
+            if (error == 'Not authenticated')
+                throw new Error('Not authenticated');
+            throw new Error('Internal error');
         }
     }),
 };
 exports.productMutations = {
     createProduct: (_parent, args, context) => __awaiter(void 0, void 0, void 0, function* () {
+        if (args.name.length > 35)
+            throw new Error('The name must not be longer than 35 characters.');
         try {
             const userId = auth_1.getUserId(context);
             const file = yield args.image;
@@ -57,11 +62,14 @@ exports.productMutations = {
             const productCreated = yield Product.create(newProduct);
             newProduct.objectID = productCreated.null;
             yield algolia_1.default.saveObject(newProduct);
-            return productCreated;
+            newProduct.id = newProduct.objectID;
+            return newProduct;
         }
         catch (error) {
-            console.log(error);
             logger_1.default.log('On create a product', { color: 'error', type: 'error' });
+            if (error == 'Not authenticated')
+                throw new Error('Not authenticated');
+            throw new Error('Internal error');
         }
     }),
     updateProduct: (_parent, args, context) => __awaiter(void 0, void 0, void 0, function* () {
@@ -69,7 +77,7 @@ exports.productMutations = {
             const userId = auth_1.getUserId(context);
             const product = yield Product.findByPk(args.id, { attributes: ['cloudId'] });
             if (!product)
-                return 'Product doesn`t exits';
+                throw new Error('Product doesn`t exits');
             const file = yield args.image;
             const newProduct = {};
             if (file) {
@@ -96,7 +104,11 @@ exports.productMutations = {
         }
         catch (error) {
             logger_1.default.log('On update a product', { color: 'error', type: 'error' });
-            return { message: 'Not Authenticated' };
+            if (error == 'Not authenticated')
+                throw new Error('Not authenticated');
+            if (error == 'Product doesn`t exits')
+                throw new Error('Product doesn`t exits');
+            throw new Error('Internal error');
         }
     }),
     deleteProduct: (_parent, { id }, context) => __awaiter(void 0, void 0, void 0, function* () {
@@ -104,7 +116,7 @@ exports.productMutations = {
             const userId = auth_1.getUserId(context);
             const product = yield Product.findByPk(id, { attributes: ['cloudId'] });
             if (!product)
-                return 'Product not found';
+                throw new Error('Product not found');
             yield cloudinary_1.default.v2.uploader.destroy(product.cloudId);
             yield algolia_1.default.deleteObject(id);
             yield Product.destroy({ where: { id: id } });
@@ -112,6 +124,11 @@ exports.productMutations = {
         }
         catch (error) {
             logger_1.default.log('Deleting record', { color: 'error', type: 'error' });
+            if (error == 'Not authenticated')
+                throw new Error('Not authenticated');
+            if (error == 'Product not found')
+                throw new Error('Product not found');
+            throw new Error('Internal error');
         }
     }),
 };

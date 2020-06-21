@@ -20,6 +20,7 @@ export default `
         total: Float
         tax: Float
         subtotal: Float
+        converted: Boolean
         products: [CartDetail]
     }
 
