@@ -33,6 +33,7 @@ Cart.init({
     tax: { type: sequelize_1.default.FLOAT },
     subtotal: { type: sequelize_1.default.FLOAT },
     userId: { type: sequelize_1.default.INTEGER },
+    converted: { type: sequelize_1.default.BOOLEAN },
 }, {
     sequelize: database_1.sequelize,
     modelName: 'cart',

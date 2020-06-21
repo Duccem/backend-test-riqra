@@ -87,6 +87,7 @@ exports.CartMutations = {
                     cartId: cart.id,
                     productId: product.id,
                     quantity: parseFloat(args.quantity),
+                    converted: false,
                 };
                 price = newDetail.quantity * parseFloat(product.price);
                 totalprice = parseFloat(cart.subtotal) + price;

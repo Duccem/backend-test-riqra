@@ -6,29 +6,33 @@ import logger from '../lib/logger';
 import { mail } from '../lib/keys';
 
 export const OrderQuery = {
-	getOrder: async (parent: any, args: any, context: any) => {
+	getOrders: async (parent: any, args: any, context: any) => {
 		try {
 			const _userId = getUserId(context);
-			const order = await Order.findOne({ where: { id: args.id, userId: _userId } });
-			let products = [];
-			let details = await CartDetail.findAll({ where: { cartId: order.cartId } });
-			for (let index = 0; index < details.length; index++) {
-				const element = details[index];
-				let product = await Product.findOne({ where: { id: element.productId } });
-				let newDetail = {
-					name: product.name,
-					brand: product.brand,
-					price: product.price,
-					image: product.image,
-					quantity: element.quantity,
-				};
-				products.push(newDetail);
+			const orders = await Order.findAll({ where: { userId: _userId } });
+			for (let index = 0; index < orders.length; index++) {
+				const element = orders[index];
+				let products = [];
+				let details = await CartDetail.findAll({ where: { cartId: element.cartId } });
+				for (let index1 = 0; index1 < details.length; index1++) {
+					const element1 = details[index1];
+					let product = await Product.findOne({ where: { id: element1.productId } });
+					let newDetail = {
+						name: product.name,
+						brand: product.brand,
+						price: product.price,
+						image: product.image,
+						quantity: element.quantity,
+					};
+					products.push(newDetail);
+				}
+				orders[index].products = products;
 			}
-			order.products = products;
-			return order;
+			return orders;
 		} catch (error) {
 			logger.log('On get carts', { type: 'error', color: 'error' });
-			return { message: 'Iternal error' };
+			if (error == 'Not authenticated') throw new Error('Not authenticated');
+			throw new Error('Internal error');
 		}
 	},
 };
@@ -40,13 +44,15 @@ export const OrderMutations = {
 			const cart = await Cart.findOne({ where: { id: args.id, userId: _userId } });
 			if (!cart) return {};
 
-			let code = new String(cart.id);
+			const count = await Order.count({ where: { userId: _userId } });
+			let code = new String(count);
 			const newOrder: any = {
 				total: cart.total,
 				subtotal: cart.subtotal,
 				tax: cart.tax,
 				code: 'P' + code.padStart(4, '0'),
 				cartId: cart.id,
+				userId: cart.userId,
 			};
 			const user = await User.findByPk(_userId);
 			let transporter = nodemailer.createTransport({
@@ -67,12 +73,13 @@ export const OrderMutations = {
                 `,
 			});
 			const createdOrder = await Order.create(newOrder);
+			await Cart.update({ converted: true }, { where: { id: args.id } });
 			newOrder.id = createdOrder.null;
 			return newOrder;
 		} catch (error) {
-			console.log(error);
 			logger.log('On get carts', { type: 'error', color: 'error' });
-			return { message: 'Iternal error' };
+			if (error == 'Not authenticated') throw new Error('Not authenticated');
+			throw new Error('Internal error');
 		}
 	},
 };

@@ -18,27 +18,31 @@ const { Order, Cart, CartDetail, Product, User } = models_1.Models;
 const auth_1 = require("../lib/auth");
 const nodemailer_1 = __importDefault(require("nodemailer"));
 const logger_1 = __importDefault(require("../lib/logger"));
+const keys_1 = require("../lib/keys");
 exports.OrderQuery = {
-    getOrder: (parent, args, context) => __awaiter(void 0, void 0, void 0, function* () {
+    getOrders: (parent, args, context) => __awaiter(void 0, void 0, void 0, function* () {
         try {
             const _userId = auth_1.getUserId(context);
-            const order = yield Order.findOne({ where: { id: args.id, userId: _userId } });
-            let products = [];
-            let details = yield CartDetail.findAll({ where: { cartId: order.cartId } });
-            for (let index = 0; index < details.length; index++) {
-                const element = details[index];
-                let product = yield Product.findOne({ where: { id: element.productId } });
-                let newDetail = {
-                    name: product.name,
-                    brand: product.brand,
-                    price: product.price,
-                    image: product.image,
-                    quantity: element.quantity,
-                };
-                products.push(newDetail);
+            const orders = yield Order.findAll({ where: { userId: _userId } });
+            for (let index = 0; index < orders.length; index++) {
+                const element = orders[index];
+                let products = [];
+                let details = yield CartDetail.findAll({ where: { cartId: element.cartId } });
+                for (let index1 = 0; index1 < details.length; index1++) {
+                    const element1 = details[index1];
+                    let product = yield Product.findOne({ where: { id: element1.productId } });
+                    let newDetail = {
+                        name: product.name,
+                        brand: product.brand,
+                        price: product.price,
+                        image: product.image,
+                        quantity: element.quantity,
+                    };
+                    products.push(newDetail);
+                }
+                orders[index].products = products;
             }
-            order.products = products;
-            return order;
+            return orders;
         }
         catch (error) {
             logger_1.default.log('On get carts', { type: 'error', color: 'error' });
@@ -53,13 +57,15 @@ exports.OrderMutations = {
             const cart = yield Cart.findOne({ where: { id: args.id, userId: _userId } });
             if (!cart)
                 return {};
-            let code = new String(cart.id);
+            const count = yield Order.count({ where: { userId: _userId } });
+            let code = new String(count);
             const newOrder = {
                 total: cart.total,
                 subtotal: cart.subtotal,
                 tax: cart.tax,
                 code: 'P' + code.padStart(4, '0'),
                 cartId: cart.id,
+                userId: cart.userId,
             };
             const user = yield User.findByPk(_userId);
             let transporter = nodemailer_1.default.createTransport({
@@ -67,19 +73,20 @@ exports.OrderMutations = {
                 port: 465,
                 secure: false,
                 auth: {
-                    user: 'ducen29@gmail.com',
-                    pass: '2979Jose#$',
+                    user: keys_1.mail.mail,
+                    pass: keys_1.mail.password,
                 },
             });
             let { messageId } = yield transporter.sendMail({
                 to: user.email,
                 from: 'ducen29@gmail.com',
-                subject: 'Password recuperation',
+                subject: 'Order created',
                 html: `
                     Yor order has been created with code ${newOrder.code}
                 `,
             });
             const createdOrder = yield Order.create(newOrder);
+            yield Cart.update({ converted: true }, { where: { id: args.id } });
             newOrder.id = createdOrder.null;
             return newOrder;
         }

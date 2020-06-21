@@ -13,13 +13,16 @@ export const productQuery = {
 			const products = hits;
 			return products;
 		} catch (error) {
-			return { message: 'Not Authorized' };
+			logger.log('On search', { color: 'error', type: 'error' });
+			if (error == 'Not authenticated') throw new Error('Not authenticated');
+			throw new Error('Internal error');
 		}
 	},
 };
 
 export const productMutations = {
 	createProduct: async (_parent: any, args: any, context: any) => {
+		if (args.name.length > 35) throw new Error('The name must not be longer than 35 characters.');
 		try {
 			const userId = getUserId(context);
 			const file = await args.image;
@@ -42,17 +45,19 @@ export const productMutations = {
 			const productCreated = await Product.create(newProduct);
 			newProduct.objectID = productCreated.null;
 			await index.saveObject(newProduct);
-			return productCreated;
+			newProduct.id = newProduct.objectID;
+			return newProduct;
 		} catch (error) {
-			console.log(error);
 			logger.log('On create a product', { color: 'error', type: 'error' });
+			if (error == 'Not authenticated') throw new Error('Not authenticated');
+			throw new Error('Internal error');
 		}
 	},
 	updateProduct: async (_parent: any, args: any, context: any) => {
 		try {
 			const userId = getUserId(context);
 			const product = await Product.findByPk(args.id, { attributes: ['cloudId'] });
-			if (!product) return 'Product doesn`t exits';
+			if (!product) throw new Error('Product doesn`t exits');
 			const file = await args.image;
 			const newProduct: any = {};
 			if (file) {
@@ -77,20 +82,25 @@ export const productMutations = {
 			return await Product.findByPk(args.id);
 		} catch (error) {
 			logger.log('On update a product', { color: 'error', type: 'error' });
-			return { message: 'Not Authenticated' };
+			if (error == 'Not authenticated') throw new Error('Not authenticated');
+			if (error == 'Product doesn`t exits') throw new Error('Product doesn`t exits');
+			throw new Error('Internal error');
 		}
 	},
 	deleteProduct: async (_parent: any, { id }: any, context: any) => {
 		try {
 			const userId = getUserId(context);
 			const product = await Product.findByPk(id, { attributes: ['cloudId'] });
-			if (!product) return 'Product not found';
+			if (!product) throw new Error('Product not found');
 			await cloudinary.v2.uploader.destroy(product.cloudId);
 			await index.deleteObject(id);
 			await Product.destroy({ where: { id: id } });
 			return 'Product deleted';
 		} catch (error) {
 			logger.log('Deleting record', { color: 'error', type: 'error' });
+			if (error == 'Not authenticated') throw new Error('Not authenticated');
+			if (error == 'Product not found') throw new Error('Product not found');
+			throw new Error('Internal error');
 		}
 	},
 };

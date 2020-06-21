@@ -26,7 +26,8 @@ export const CartQuery = {
 			return cart;
 		} catch (error) {
 			logger.log('On get cart', { type: 'error', color: 'error' });
-			return { message: 'Iternal error' };
+			if (error == 'Not authenticated') throw new Error('Not authenticated');
+			throw new Error('Internal error');
 		}
 	},
 };
@@ -45,9 +46,9 @@ export const CartMutations = {
 			newCart.id = cartCreated.null;
 			return newCart;
 		} catch (error) {
-			console.log(error);
 			logger.log('On create cart', { type: 'error', color: 'error' });
-			return { message: 'Iternal error' };
+			if (error == 'Not authenticated') throw new Error('Not authenticated');
+			throw new Error('Internal error');
 		}
 	},
 	addProductToCart: async (parent: any, args: any, context: any) => {
@@ -55,7 +56,7 @@ export const CartMutations = {
 			const _userId = getUserId(context);
 			const cart = await Cart.findOne({ where: { id: args.id, userId: _userId } });
 			const product = await Product.findOne({ where: { id: args.productId, userId: _userId } });
-			if (!product) return 'The product doesn`t exist';
+			if (!product) throw new Error('Product doesn`t exits');
 
 			let price = 0;
 			let totalprice = 0;
@@ -71,6 +72,7 @@ export const CartMutations = {
 					cartId: cart.id,
 					productId: product.id,
 					quantity: parseFloat(args.quantity),
+					converted: false,
 				};
 				price = newDetail.quantity * parseFloat(product.price);
 				totalprice = parseFloat(cart.subtotal) + price;
@@ -81,7 +83,9 @@ export const CartMutations = {
 			return 'Product added';
 		} catch (error) {
 			logger.log('On add product to a cart', { type: 'error', color: 'error' });
-			return 'Iternal error';
+			if (error == 'Not authenticated') throw new Error('Not authenticated');
+			if (error == 'Product doesn`t exits') throw new Error('Product doesn`t exits');
+			throw new Error('Internal error');
 		}
 	},
 	removeProductFromCart: async (parent: any, args: any, context: any) => {
@@ -90,10 +94,10 @@ export const CartMutations = {
 			const cart = await Cart.findOne({ where: { id: args.id, userId: _userId } });
 			const product = await Product.findOne({ where: { id: args.productId, userId: _userId } });
 
-			if (!product) return 'The product doesn`t exist';
+			if (!product) throw new Error('Product doesn`t exits');
 
 			const detail = await CartDetail.findOne({ where: { cartId: cart.id, productId: product.id } });
-			if (!detail) return 'The cart doesn`t have this product';
+			if (!detail) throw new Error('The cart doesn`t have this product');
 
 			let price = 0;
 			let totalprice = 0;
@@ -111,7 +115,10 @@ export const CartMutations = {
 			return 'Product removed';
 		} catch (error) {
 			logger.log('On remove product from a cart', { type: 'error', color: 'error' });
-			return 'Iternal error';
+			if (error == 'Not authenticated') throw new Error('Not authenticated');
+			if (error == 'Product doesn`t exits') throw new Error('Product doesn`t exits');
+			if (error == 'The cart doesn`t have this product') throw new Error('The cart doesn`t have this product');
+			throw new Error('Internal error');
 		}
 	},
 };

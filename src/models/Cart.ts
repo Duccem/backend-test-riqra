@@ -10,6 +10,7 @@ Cart.init(
 		tax: { type: Sequelize.FLOAT },
 		subtotal: { type: Sequelize.FLOAT },
 		userId: { type: Sequelize.INTEGER },
+		converted: { type: Sequelize.BOOLEAN },
 	},
 	{
 		sequelize,

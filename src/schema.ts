@@ -60,7 +60,6 @@ export default `
         search(term: String!, page: Int!, limit:Int!): [Product!]!
         getCart(id: ID!): Cart
         getOrders: [Order!]!
-        getOrder(id: ID!): Order
     }
     
 `;
