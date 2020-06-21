@@ -67,7 +67,7 @@ export const OrderMutations = {
 			});
 			let { messageId } = await transporter.sendMail({
 				to: user.email,
-				from: 'ducen29@gmail.com',
+				from: mail.mail
 				subject: 'Order created',
 				html: `
                     Yor order has been created with code ${newOrder.code}
