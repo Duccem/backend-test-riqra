@@ -25,12 +25,14 @@ export class App {
 			context: ({ req }) => {
 				return { req };
 			},
+			playground: true,
+			introspection: true,
 		});
 		server.applyMiddleware({ app: this.app, path: '/api' });
 	}
 
 	private settings() {
-		this.app.set('port', process.argv[2] || process.env.PORT || this.port || 3000);
+		this.app.set('port', process.argv[2] || process.env.PORT || this.port || 80);
 	}
 
 	private middlewares() {

@@ -48,11 +48,13 @@ class App {
             context: ({ req }) => {
                 return { req };
             },
+            playground: true,
+            introspection: true,
         });
         server.applyMiddleware({ app: this.app, path: '/api' });
     }
     settings() {
-        this.app.set('port', process.argv[2] || process.env.PORT || this.port || 3000);
+        this.app.set('port', process.argv[2] || process.env.PORT || this.port || 80);
     }
     middlewares() {
         this.app.use(express_1.json());
