@@ -12,7 +12,7 @@ CartDetail.init(
 	},
 	{
 		sequelize,
-		modelName: 'cartDetail',
+		modelName: 'cartdetail',
 		timestamps: false,
 	}
 );

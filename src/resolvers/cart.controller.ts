@@ -83,6 +83,7 @@ export const CartMutations = {
 			Cart.update({ subtotal: totalprice, tax: tax, total: totalprice + tax }, { where: { id: cart.id } });
 			return 'Product added';
 		} catch (error) {
+			console.log(error);
 			logger.log('On add product to a cart', { type: 'error', color: 'error' });
 			if (error == 'Not authenticated') throw new Error('Not authenticated');
 			if (error == 'Product doesn`t exits') throw new Error('Product doesn`t exits');
@@ -115,6 +116,7 @@ export const CartMutations = {
 			Cart.update({ subtotal: totalprice, tax: tax, total: totalprice + tax }, { where: { id: cart.id } });
 			return 'Product removed';
 		} catch (error) {
+			console.log(error);
 			logger.log('On remove product from a cart', { type: 'error', color: 'error' });
 			if (error == 'Not authenticated') throw new Error('Not authenticated');
 			if (error == 'Product doesn`t exits') throw new Error('Product doesn`t exits');

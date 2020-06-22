@@ -62,6 +62,7 @@ exports.CartMutations = {
             return newCart;
         }
         catch (error) {
+            console.log(error);
             logger_1.default.log('On create cart', { type: 'error', color: 'error' });
             if (error == 'Not authenticated')
                 throw new Error('Not authenticated');
@@ -101,6 +102,7 @@ exports.CartMutations = {
             return 'Product added';
         }
         catch (error) {
+            console.log(error);
             logger_1.default.log('On add product to a cart', { type: 'error', color: 'error' });
             if (error == 'Not authenticated')
                 throw new Error('Not authenticated');
@@ -136,6 +138,7 @@ exports.CartMutations = {
             return 'Product removed';
         }
         catch (error) {
+            console.log(error);
             logger_1.default.log('On remove product from a cart', { type: 'error', color: 'error' });
             if (error == 'Not authenticated')
                 throw new Error('Not authenticated');

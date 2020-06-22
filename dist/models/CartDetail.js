@@ -30,7 +30,7 @@ CartDetail.init({
     quantity: { type: sequelize_1.default.FLOAT },
 }, {
     sequelize: database_1.sequelize,
-    modelName: 'cartDetail',
+    modelName: 'cartdetail',
     timestamps: false,
 });
 exports.default = CartDetail;
