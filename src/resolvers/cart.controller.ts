@@ -46,6 +46,7 @@ export const CartMutations = {
 			newCart.id = cartCreated.null;
 			return newCart;
 		} catch (error) {
+			console.log(error);
 			logger.log('On create cart', { type: 'error', color: 'error' });
 			if (error == 'Not authenticated') throw new Error('Not authenticated');
 			throw new Error('Internal error');
